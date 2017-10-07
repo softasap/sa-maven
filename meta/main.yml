@@ -31,9 +31,9 @@ galaxy_info:
     - name: EL
       versions:
         - 7
-    - name: Alpine
-      versions:
-        - any
+#    - name: Alpine
+#      versions:
+#        - any
 
   galaxy_tags:
     - maven
