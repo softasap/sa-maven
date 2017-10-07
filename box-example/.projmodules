@@ -1,0 +1,3 @@
+[submodule "roles/ansible-maven"]
+        path = roles/sa-maven
+        url = https://github.com/softasap/sa-maven.git

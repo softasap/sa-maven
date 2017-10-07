@@ -1,0 +1,11 @@
+# defaults file
+
+role_dir: "{{ role_path }}"
+role_fact_group_name: {{role_name.replace('-','_')}}
+
+option_link_mvn_to_bin: true
+
+maven_version: '3.0.4'
+maven_install_dir: /opt/maven
+
+maven_distribution_url: "http://archive.apache.org/dist/maven/maven-{{ maven_version.split(".")[0] }}/{{ maven_version }}/binaries"

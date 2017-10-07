@@ -1,0 +1,43 @@
+---
+  - name: Maven | Test if maven installed
+    shell: test -x /usr/bin/mvn
+    ignore_errors: true
+    register: maven_exists
+    tags:
+      - maven
+
+  - name: Maven | Ensure {{maven_install_dir}} exists
+    file: path="{{ maven_install_dir }}" state=directory owner=root group=root mode="u=rwx,g=rx,o=rx"
+    become: yes
+    when: maven_exists | failed
+    tags:
+      - maven
+
+  - name: Maven | Download Maven distribution
+    get_url:
+      url: '{{ maven_distribution_url }}/apache-maven-{{ maven_version }}-bin.tar.gz'
+      dest: '/tmp/apache-maven-{{ maven_version }}-bin.tar.gz'
+      sha256sum: '{{ maven_sha256sum | default(omit) }}'
+      force: no
+      validate_certs: no
+    when: maven_exists | failed
+    tags:
+      - maven
+
+  - name: Maven | Unpack distribution
+    unarchive: src="/tmp/apache-maven-{{ maven_version }}-bin.tar.gz" dest="{{ maven_install_dir }}" remote_src="yes" owner="root" group="root" mode="go-w" creates="{{ maven_install_dir }}/apache-maven-{{ maven_version }}"
+    when: maven_exists | failed
+    become: yes
+    tags:
+      - maven
+
+  - name: Maven | link {{item}} to /usr/local/bin/{{item}}
+    file: src: "{{ maven_install_dir }}/apache-maven-{{ maven_version }}/bin/{{item}}" dest="/usr/local/bin/{{item}}" state="link" force="yes" owner="root" group="root" mode="u=rwx,go=rx"
+    become: yes
+    when: option_link_mvn_to_bin and maven_exists | failed
+    with_items:
+      - mvn
+      - mvnDebug
+
+  - include: __write_ansible_fact.yml fact_group_name="{{role_fact_group_name}}" fact_template="{{role_dir}}/templates/ansible_fact/fact.j2"
+    when: maven_exists | failed
