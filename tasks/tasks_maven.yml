@@ -1,13 +1,13 @@
 ---
   - name: Maven | Test if maven installed
-    shell: test -x /usr/bin/mvn
+    shell: test -x /usr/local/bin/mvn
     ignore_errors: true
     register: maven_exists
     tags:
       - maven
 
-  - name: Maven | Ensure {{maven_install_dir}} exists
-    file: path="{{ maven_install_dir }}" state=directory owner=root group=root mode="u=rwx,g=rx,o=rx"
+  - name: Maven | Ensure {{maven_base_install_dir}} exists
+    file: path="{{ maven_base_install_dir }}" state=directory owner=root group=root mode="u=rwx,g=rx,o=rx"
     become: yes
     when: maven_exists | failed
     tags:
@@ -25,14 +25,19 @@
       - maven
 
   - name: Maven | Unpack distribution
-    unarchive: src="/tmp/apache-maven-{{ maven_version }}-bin.tar.gz" dest="{{ maven_install_dir }}" remote_src="yes" owner="root" group="root" mode="go-w" creates="{{ maven_install_dir }}/apache-maven-{{ maven_version }}"
+    unarchive: src="/tmp/apache-maven-{{ maven_version }}-bin.tar.gz" dest="{{ maven_base_install_dir }}" remote_src="yes" owner="root" group="root" mode="go-w" creates="{{ maven_base_install_dir }}/apache-maven-{{ maven_version }}"
     when: maven_exists | failed
     become: yes
     tags:
       - maven
 
+  - name: Maven | Link {{ maven_base_install_dir }}/apache-maven-{{ maven_version }} to {{ maven_install_dir }}
+    file: src="{{ maven_base_install_dir }}/apache-maven-{{ maven_version }}" dest="{{ maven_install_dir }}" state="link" force="yes" owner="root" group="root" mode="u=rwx,g=rx,o=rx"
+    become: yes
+    when: maven_exists | failed
+
   - name: Maven | link {{item}} to /usr/local/bin/{{item}}
-    file: src: "{{ maven_install_dir }}/apache-maven-{{ maven_version }}/bin/{{item}}" dest="/usr/local/bin/{{item}}" state="link" force="yes" owner="root" group="root" mode="u=rwx,go=rx"
+    file: src="{{ maven_install_dir }}/apache-maven-{{ maven_version }}/bin/{{item}}" dest="/usr/local/bin/{{item}}" state="link" force="yes" owner="root" group="root" mode="u=rwx,go=rx"
     become: yes
     when: option_link_mvn_to_bin and maven_exists | failed
     with_items:
